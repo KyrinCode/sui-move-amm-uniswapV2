@@ -7,6 +7,8 @@ module amm::uniswapV2 {
     use std::ascii;
     use sui::table::{Self, Table};
     use sui::tx_context::sender;
+    use sui::object::{Self, UID};
+    use sui::tx_context::{Self, TxContext};
 
     /* === errors === */
 
@@ -50,7 +52,7 @@ module amm::uniswapV2 {
     /* === events === */
 
     public struct PoolCreated has copy, drop {
-        pool_id: ID,
+        pool_id: UID,
         a: TypeName,
         b: TypeName,
         init_a: u64,
@@ -59,7 +61,7 @@ module amm::uniswapV2 {
     }
 
     public struct LiquidityAdded has copy, drop {
-        pool_id: ID,
+        pool_id: UID,
         a: TypeName,
         b: TypeName,
         amountin_a: u64,
@@ -68,7 +70,7 @@ module amm::uniswapV2 {
     }
 
     public struct LiquidityRemoved has copy, drop {
-        pool_id: ID,
+        pool_id: UID,
         a: TypeName,
         b: TypeName,
         amountout_a: u64,
@@ -77,7 +79,7 @@ module amm::uniswapV2 {
     }
 
     public struct Swapped has copy, drop {
-        pool_id: ID,
+        pool_id: UID,
         tokenin: TypeName,
         amountin: u64,
         tokenout: TypeName,
@@ -128,8 +130,8 @@ module amm::uniswapV2 {
         let b = type_name::get<B>();
         assert!(cmp_type_names(&a, &b) == 0, EInvalidPair);
 
-        let item = PoolItem{ a, b };
-        assert!(table::contains(&factory.table, item) == false, EPoolAlreadyExists);
+        let item = PoolItem { a, b };
+        assert!(table::contains(&factory.table, &item) == false, EPoolAlreadyExists);
 
         table::add(&mut factory.table, item, true)
     }
@@ -376,7 +378,7 @@ module amm::uniswapV2 {
         balance::split(&mut pool.balance_a, out_amount)
     }
 
-    /// Calclates swap result and fees based on the input amount and current pool state.
+    /// Calculates swap result and fees based on the input amount and current pool state.
     fun calc_swap_out(input_amount: u64, input_pool_amount: u64, out_pool_amount: u64, fee_points: u64): u64 {
         // calc out value
         let fee_amount = ceil_muldiv(input_amount, fee_points, LP_FEE_BASE);
@@ -506,7 +508,7 @@ module amm::uniswapV2 {
     fun test_remove_pool_item<A, B>(factory: &mut Factory) {
         let a = type_name::get<A>();
         let b = type_name::get<B>();
-        table::remove(&mut factory.table, PoolItem{ a, b });
+        table::remove(&mut factory.table, PoolItem { a, b });
     }
 
     #[test]

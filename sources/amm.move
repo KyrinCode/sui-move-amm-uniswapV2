@@ -7,6 +7,8 @@ module amm::uniswapV2 {
     use std::ascii;
     use sui::table::{Self, Table};
     use sui::tx_context::sender;
+    use sui::object::UID;
+    use sui::tx_context::TxContext;
 
     /* === errors === */
 
@@ -50,7 +52,7 @@ module amm::uniswapV2 {
     /* === events === */
 
     public struct PoolCreated has copy, drop {
-        pool_id: ID,
+        pool_id: UID,
         a: TypeName,
         b: TypeName,
         init_a: u64,
@@ -59,7 +61,7 @@ module amm::uniswapV2 {
     }
 
     public struct LiquidityAdded has copy, drop {
-        pool_id: ID,
+        pool_id: UID,
         a: TypeName,
         b: TypeName,
         amountin_a: u64,
@@ -68,7 +70,7 @@ module amm::uniswapV2 {
     }
 
     public struct LiquidityRemoved has copy, drop {
-        pool_id: ID,
+        pool_id: UID,
         a: TypeName,
         b: TypeName,
         amountout_a: u64,
@@ -77,7 +79,7 @@ module amm::uniswapV2 {
     }
 
     public struct Swapped has copy, drop {
-        pool_id: ID,
+        pool_id: UID,
         tokenin: TypeName,
         amountin: u64,
         tokenout: TypeName,
@@ -208,7 +210,7 @@ module amm::uniswapV2 {
         lp_balance
     }
 
-    public fun add_liquidity<A, B>(pool: &mut Pool<A, B>, mut input_a: Balance<A>, mut input_b: Balance<B>, min_lp_out: u64): (Balance<A>, Balance<B>, Balance<LP<A, B>>) {
+public fun add_liquidity<A, B>(pool: &mut Pool<A, B>, mut input_a: Balance<A>, mut input_b: Balance<B>, min_lp_out: u64): (Balance<A>, Balance<B>, Balance<LP<A, B>>) {
         assert!(balance::value(&input_a) > 0 && balance::value(&input_b) > 0, EZeroInput);
 
         // calculate the deposit amounts
@@ -376,7 +378,7 @@ module amm::uniswapV2 {
         balance::split(&mut pool.balance_a, out_amount)
     }
 
-    /// Calclates swap result and fees based on the input amount and current pool state.
+    /// Calculates swap result and fees based on the input amount and current pool state.
     fun calc_swap_out(input_amount: u64, input_pool_amount: u64, out_pool_amount: u64, fee_points: u64): u64 {
         // calc out value
         let fee_amount = ceil_muldiv(input_amount, fee_points, LP_FEE_BASE);
@@ -502,7 +504,7 @@ module amm::uniswapV2 {
         table::destroy_empty(table);
     }
 
-    #[test_only]
+     #[test_only]
     fun test_remove_pool_item<A, B>(factory: &mut Factory) {
         let a = type_name::get<A>();
         let b = type_name::get<B>();
